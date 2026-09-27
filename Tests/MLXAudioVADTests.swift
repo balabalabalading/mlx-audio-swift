@@ -515,6 +515,19 @@ struct SortformerSanitizeTests {
 
 struct SortformerPostprocessingTests {
 
+    @Test func streamingBatchExtractionAvoidsScalarGather() {
+        // Sortformer streaming predictions have shape [batch, frame, speaker].
+        // Keep this on the same extraction helper used by streamingStep.
+        let predictions = MLXArray((0..<8).map(Float.init))
+            .reshaped(1, 4, 2)
+            .transposed(0, 2, 1)
+        let firstBatch = SortformerModel.predictionsForFirstBatch(predictions)
+
+        eval(firstBatch)
+        #expect(firstBatch.shape == [2, 4])
+        #expect(firstBatch.asArray(Float.self) == [0, 2, 4, 6, 1, 3, 5, 7])
+    }
+
     @Test func predsToSegmentsBasic() {
         // Create simple predictions: speaker 0 active for frames 0-9, speaker 1 for frames 5-14
         let nFrames = 20

@@ -739,7 +739,11 @@ public class SortformerModel: Module {
             updatedFifoPreds: updatedFifoPreds
         )
 
-        return (chunkPreds[0], newState)
+        return (Self.predictionsForFirstBatch(chunkPreds), newState)
+    }
+
+    static func predictionsForFirstBatch(_ predictions: MLXArray) -> MLXArray {
+        predictions[0..<1, 0..., 0...].squeezed(axis: 0)
     }
 
     /// Feed a single audio chunk and get diarization results.
