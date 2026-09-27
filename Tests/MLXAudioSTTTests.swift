@@ -1598,6 +1598,36 @@ struct Qwen3ASRModuleSetupTests {
         #expect(output.shape == [batchSize, seqLen, config.dModel])
     }
 
+    @Test func qwen3AudioEncoderNonContiguousFeatures() {
+        let config = Qwen3AudioEncoderConfig(
+            numMelBins: 16,
+            encoderLayers: 1,
+            encoderAttentionHeads: 2,
+            encoderFfnDim: 16,
+            dModel: 8,
+            maxSourcePositions: 32,
+            nWindow: 8,
+            outputDim: 8,
+            nWindowInfer: 32,
+            downsampleHiddenSize: 2
+        )
+        let encoder = Qwen3ASRAudioEncoder(config)
+        let melFrames = MLXArray((0..<(64 * config.numMelBins)).map { Float($0) })
+            .reshaped(64, config.numMelBins)
+        let features = melFrames.transposed(1, 0)
+            .expandedDimensions(axis: 0)
+        let mask = MLXArray.ones([1, 64]).asType(.int32)
+
+        let encoded = encoder(features, featureAttentionMask: mask)
+        eval(encoded)
+
+        #expect(encoded.ndim == 2)
+        #expect(encoded.dim(1) == config.outputDim)
+        #expect(encoded.dim(0) > 0)
+        let encodedValues = encoded.asArray(Float.self)
+        #expect(encodedValues.allSatisfy { $0.isFinite })
+    }
+
     // MARK: - Text Layer Shape Tests
 
     @Test func qwen3TextMLPShape() {

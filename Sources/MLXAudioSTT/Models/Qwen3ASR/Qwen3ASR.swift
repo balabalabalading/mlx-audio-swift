@@ -500,7 +500,7 @@ public class Qwen3ASRAudioEncoder: Module {
         for i in 0..<batchSize {
             let featLen = featureLens[i]
             let numChunks = Int(ceil(Double(featLen) / Double(chunkSize)))
-            let feat = inputFeatures[i]  // [n_mels, n_frames]
+            let feat = inputFeatures[i..<(i + 1)].squeezed(axis: 0)  // [n_mels, n_frames]
             chunkCountsPerInput.append(numChunks)
 
             var pos = 0
